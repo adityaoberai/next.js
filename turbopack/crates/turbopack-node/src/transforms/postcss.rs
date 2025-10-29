@@ -1,4 +1,5 @@
 use anyhow::{Context, Result, bail};
+use bincode::{Decode, Encode};
 use indoc::formatdoc;
 use serde::{Deserialize, Serialize};
 use turbo_rcstr::{RcStr, rcstr};
@@ -25,13 +26,13 @@ use turbopack_core::{
 };
 use turbopack_ecmascript::runtime_functions::TURBOPACK_EXTERNAL_IMPORT;
 
-use super::{
-    util::{EmittedAsset, emitted_assets_to_virtual_sources},
-    webpack::WebpackLoaderContext,
-};
 use crate::{
-    embed_js::embed_file_path, execution_context::ExecutionContext,
-    transforms::webpack::evaluate_webpack_loader,
+    embed_js::embed_file_path,
+    execution_context::ExecutionContext,
+    transforms::{
+        util::{EmittedAsset, emitted_assets_to_virtual_sources},
+        webpack::{WebpackLoaderContext, evaluate_webpack_loader},
+    },
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -56,6 +57,8 @@ struct PostCssProcessingResult {
     Deserialize,
     TaskInput,
     NonLocalValue,
+    Encode,
+    Decode,
 )]
 pub enum PostCssConfigLocation {
     #[default]

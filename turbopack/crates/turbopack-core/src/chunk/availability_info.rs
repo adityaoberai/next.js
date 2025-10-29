@@ -1,8 +1,9 @@
 use anyhow::Result;
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use turbo_tasks::{NonLocalValue, ResolvedVc, TaskInput, Vc, trace::TraceRawVcs};
 
-use super::available_modules::{AvailableModules, AvailableModulesSet};
+use crate::chunk::available_modules::{AvailableModules, AvailableModulesSet};
 
 #[derive(
     Eq,
@@ -16,6 +17,8 @@ use super::available_modules::{AvailableModules, AvailableModulesSet};
     NonLocalValue,
     Serialize,
     Deserialize,
+    Encode,
+    Decode,
 )]
 pub enum AvailabilityInfo {
     /// Availability of modules is not tracked

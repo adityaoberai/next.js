@@ -6,7 +6,9 @@ use crate::module_graph::module_batch::{ChunkableModuleOrBatch, IdentStrings};
 
 #[turbo_tasks::value(transparent)]
 #[derive(Debug, Clone)]
-pub struct AvailableModulesSet(FxIndexSet<ChunkableModuleOrBatch>);
+pub struct AvailableModulesSet(
+    #[bincode(with = "turbo_bincode::indexset")] FxIndexSet<ChunkableModuleOrBatch>,
+);
 
 /// Allows to gather information about which assets are already available.
 /// Adding more roots will form a linked list like structure to allow caching

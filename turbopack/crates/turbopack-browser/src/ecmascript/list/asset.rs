@@ -1,4 +1,5 @@
 use anyhow::Result;
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use turbo_rcstr::{RcStr, rcstr};
 use turbo_tasks::{NonLocalValue, ResolvedVc, TaskInput, ValueToString, Vc, trace::TraceRawVcs};
@@ -125,6 +126,8 @@ impl Asset for EcmascriptDevChunkList {
     TraceRawVcs,
     Serialize,
     Deserialize,
+    Encode,
+    Decode,
 )]
 #[serde(rename_all = "camelCase")]
 pub enum EcmascriptDevChunkListSource {

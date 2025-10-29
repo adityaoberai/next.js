@@ -5,6 +5,7 @@ use std::{
 
 use anyhow::{Context, Result, bail};
 use auto_hash_map::AutoSet;
+use bincode::{Decode, Encode};
 use petgraph::{
     graph::{DiGraph, EdgeIndex, NodeIndex},
     visit::{
@@ -53,12 +54,25 @@ mod traced_di_graph;
 pub use self::module_batches::BatchingConfig;
 
 #[derive(
-    Debug, Copy, Clone, Eq, PartialOrd, Ord, Hash, PartialEq, Serialize, Deserialize, TraceRawVcs,
+    Debug,
+    Copy,
+    Clone,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    TraceRawVcs,
+    Encode,
+    Decode,
 )]
 pub struct GraphNodeIndex {
     #[turbo_tasks(trace_ignore)]
     graph_idx: u32,
     #[turbo_tasks(trace_ignore)]
+    #[bincode(with_serde)]
     node_idx: NodeIndex,
 }
 impl GraphNodeIndex {
@@ -73,6 +87,7 @@ unsafe impl NonLocalValue for GraphNodeIndex {}
 #[turbo_tasks::value]
 #[derive(Clone, Debug)]
 pub struct VisitedModules {
+    #[bincode(with = "turbo_bincode::indexmap")]
     pub modules: FxIndexMap<ResolvedVc<Box<dyn Module>>, GraphNodeIndex>,
     next_graph_idx: u32,
 }
@@ -191,6 +206,7 @@ pub struct SingleModuleGraph {
     //
     // This contains Vcs, but they are already contained in the graph, so no need to trace this.
     #[turbo_tasks(trace_ignore)]
+    #[bincode(with_serde)]
     modules: FxHashMap<ResolvedVc<Box<dyn Module>>, NodeIndex>,
 
     #[turbo_tasks(trace_ignore)]
@@ -1686,12 +1702,12 @@ impl SingleModuleGraph {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, TraceRawVcs, NonLocalValue)]
+#[derive(Clone, Debug, Serialize, Deserialize, TraceRawVcs, NonLocalValue, Encode, Decode)]
 pub struct SingleModuleGraphModuleNode {
     pub module: ResolvedVc<Box<dyn Module>>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, TraceRawVcs, NonLocalValue)]
+#[derive(Clone, Debug, Serialize, Deserialize, TraceRawVcs, NonLocalValue, Encode, Decode)]
 pub enum SingleModuleGraphNode {
     Module(SingleModuleGraphModuleNode),
     // Models a module that is referenced but has already been visited by an earlier graph.

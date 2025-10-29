@@ -1,4 +1,5 @@
 use anyhow::{Result, bail};
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use swc_core::{
     common::util::take::Take,
@@ -125,7 +126,17 @@ impl IntoCodeGenReference for WorkerAssetReference {
     }
 }
 
-#[derive(PartialEq, Eq, Serialize, Deserialize, TraceRawVcs, ValueDebugFormat, NonLocalValue)]
+#[derive(
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    TraceRawVcs,
+    ValueDebugFormat,
+    NonLocalValue,
+    Encode,
+    Decode,
+)]
 pub struct WorkerAssetReferenceCodeGen {
     reference: ResolvedVc<WorkerAssetReference>,
     path: AstPath,

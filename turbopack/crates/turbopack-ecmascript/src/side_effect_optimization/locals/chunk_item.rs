@@ -6,10 +6,10 @@ use turbopack_core::{
     module::Module,
 };
 
-use super::module::EcmascriptModuleLocalsModule;
 use crate::{
     EcmascriptAnalyzableExt,
     chunk::{EcmascriptChunkItem, EcmascriptChunkItemContent, EcmascriptChunkType},
+    side_effect_optimization::locals::module::EcmascriptModuleLocalsModule,
 };
 
 /// The chunk item for [EcmascriptModuleLocalsModule].
