@@ -4434,6 +4434,7 @@ dependencies = [
  "napi-derive",
  "next-api",
  "next-build",
+ "next-code-frame",
  "next-core",
  "next-custom-transforms",
  "next-taskless",
