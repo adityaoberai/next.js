@@ -9600,6 +9600,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "auto-hash-map",
+ "bitfield",
  "browserslist-rs",
  "bytes-str",
  "const_format",
