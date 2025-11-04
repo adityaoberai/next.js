@@ -646,7 +646,7 @@ export async function createHotReloaderTurbopack(
 
       // Certain crtical issues prevent any entrypoints from being constructed so return early
       if (!('routes' in entrypoints)) {
-        printBuildErrors(entrypoints, true)
+        await printBuildErrors(entrypoints, true)
 
         currentEntriesHandlingResolve!()
         currentEntriesHandlingResolve = undefined
@@ -1057,26 +1057,25 @@ export async function createHotReloaderTurbopack(
           data: { sessionId },
         }
         sendToClient(client, turbopackConnectedMessage)
+        ;(async function () {
+          const errors: CompilationError[] = []
 
-        const errors: CompilationError[] = []
-
-        for (const entryIssues of currentEntryIssues.values()) {
-          for (const issue of entryIssues.values()) {
-            if (issue.severity !== 'warning') {
-              errors.push({
-                message: formatIssue(issue),
-              })
-            } else {
-              printNonFatalIssue(issue)
+          for (const entryIssues of currentEntryIssues.values()) {
+            for (const issue of entryIssues.values()) {
+              if (issue.severity !== 'warning') {
+                errors.push({
+                  message: await formatIssue(issue),
+                })
+              } else {
+                await printNonFatalIssue(issue)
+              }
             }
           }
-        }
 
-        if (devIndicatorServerState.disabledUntil < Date.now()) {
-          devIndicatorServerState.disabledUntil = 0
-        }
+          if (devIndicatorServerState.disabledUntil < Date.now()) {
+            devIndicatorServerState.disabledUntil = 0
+          }
 
-        ;(async function () {
           const versionInfo = await getVersionInfoCached()
           const devToolsConfig = await getDevToolsConfig(distDir)
 
@@ -1200,35 +1199,35 @@ export async function createHotReloaderTurbopack(
 
       if (thisEntryIssues !== undefined && thisEntryIssues.size > 0) {
         // If there is an error related to the requesting page we display it instead of the first error
-        return [...topLevelIssues, ...thisEntryIssues.values()]
-          .map((issue) => {
-            const formattedIssue = formatIssue(issue)
-            if (issue.severity === 'warning') {
-              printNonFatalIssue(issue)
-              return null
-            } else if (isWellKnownError(issue)) {
+        const issues = []
+        for (const issue of [...topLevelIssues, ...thisEntryIssues.values()]) {
+          if (issue.severity === 'warning') {
+            await printNonFatalIssue(issue)
+          } else {
+            const formattedIssue = await formatIssue(issue)
+            if (isWellKnownError(issue)) {
               Log.error(formattedIssue)
             }
 
-            return new Error(formattedIssue)
-          })
-          .filter((error) => error !== null)
+            issues.push(new Error(formattedIssue))
+          }
+        }
       }
 
       // Otherwise, return all errors across pages
       const errors = []
       for (const issue of topLevelIssues) {
         if (issue.severity !== 'warning') {
-          errors.push(new Error(formatIssue(issue)))
+          errors.push(new Error(await formatIssue(issue)))
         }
       }
       for (const entryIssues of currentEntryIssues.values()) {
         for (const issue of entryIssues.values()) {
           if (issue.severity !== 'warning') {
-            const message = formatIssue(issue)
+            const message = await formatIssue(issue)
             errors.push(new Error(message))
           } else {
-            printNonFatalIssue(issue)
+            await printNonFatalIssue(issue)
           }
         }
       }
@@ -1451,7 +1450,7 @@ export async function createHotReloaderTurbopack(
         case 'end': {
           sendEnqueuedMessages()
 
-          function addToErrorsMap(
+          async function addToErrorsMap(
             errorsMap: Map<string, CompilationError>,
             issueMap: IssuesMap
           ) {
@@ -1459,7 +1458,7 @@ export async function createHotReloaderTurbopack(
               if (issue.severity === 'warning') continue
               if (errorsMap.has(key)) continue
 
-              const message = formatIssue(issue)
+              const message = await formatIssue(issue)
 
               errorsMap.set(key, {
                 message,
@@ -1470,18 +1469,18 @@ export async function createHotReloaderTurbopack(
             }
           }
 
-          function addErrors(
+          async function addErrors(
             errorsMap: Map<string, CompilationError>,
             issues: EntryIssuesMap
           ) {
             for (const issueMap of issues.values()) {
-              addToErrorsMap(errorsMap, issueMap)
+              await addToErrorsMap(errorsMap, issueMap)
             }
           }
 
           const errors = new Map<string, CompilationError>()
-          addToErrorsMap(errors, currentTopLevelIssues)
-          addErrors(errors, currentEntryIssues)
+          await addToErrorsMap(errors, currentTopLevelIssues)
+          await addErrors(errors, currentEntryIssues)
 
           for (const client of [
             ...clientsWithoutHtmlRequestId,
@@ -1493,7 +1492,7 @@ export async function createHotReloaderTurbopack(
             }
 
             const clientErrors = new Map(errors)
-            addErrors(clientErrors, state.clientIssues)
+            await addErrors(clientErrors, state.clientIssues)
 
             sendToClient(client, {
               type: HMR_MESSAGE_SENT_TO_BROWSER.BUILT,
