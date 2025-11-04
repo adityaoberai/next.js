@@ -1341,8 +1341,14 @@ async fn directory_tree_to_loader_tree_internal(
 
             tree.parallel_routes.insert(
                 key.clone(),
-                default_route_tree(app_dir.clone(), global_metadata, app_page.clone(), default)
-                    .await?,
+                default_route_tree(
+                    app_dir.clone(),
+                    global_metadata,
+                    app_page.clone(),
+                    default,
+                    key == "children", // Use null default for children slot in interception routes
+                )
+                .await?,
             );
         }
     }
@@ -1352,8 +1358,9 @@ async fn directory_tree_to_loader_tree_internal(
             tree = default_route_tree(
                 app_dir.clone(),
                 global_metadata,
-                app_page,
+                app_page.clone(),
                 modules.default.clone(),
+                app_page.is_intercepting(),
             )
             .await?;
         } else {
@@ -1365,8 +1372,9 @@ async fn directory_tree_to_loader_tree_internal(
             default_route_tree(
                 app_dir.clone(),
                 global_metadata,
-                app_page,
+                app_page.clone(),
                 modules.default.clone(),
+                app_page.is_intercepting(),
             )
             .await?,
         );
@@ -1388,6 +1396,7 @@ async fn default_route_tree(
     global_metadata: Vc<GlobalMetadata>,
     app_page: AppPage,
     default_component: Option<FileSystemPath>,
+    is_interception_route: bool,
 ) -> Result<AppPageLoaderTree> {
     Ok(AppPageLoaderTree {
         page: app_page.clone(),
@@ -1399,13 +1408,21 @@ async fn default_route_tree(
                 ..Default::default()
             }
         } else {
-            // default fallback component
+            // When we host applications on Vercel, the status code affects the
+            // underlying behavior of the route, which when we are missing the
+            // children slot of an interception route, will yield a full 404
+            // response for the RSC request instead. For this reason, we expect
+            // that if a default file is missing when we're rendering an
+            // interception route, we instead always render null for the default
+            // slot to avoid the full 404 response.
+            let default_file = if is_interception_route {
+                "dist/client/components/builtin/default-null.js"
+            } else {
+                "dist/client/components/builtin/default.js"
+            };
+
             AppDirModules {
-                default: Some(
-                    get_next_package(app_dir)
-                        .await?
-                        .join("dist/client/components/builtin/default.js")?,
-                ),
+                default: Some(get_next_package(app_dir).await?.join(default_file)?),
                 ..Default::default()
             }
         },
