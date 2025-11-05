@@ -38,6 +38,7 @@ import { PARALLEL_ROUTE_DEFAULT_PATH } from '../../../../client/components/built
 import type { Compilation } from 'webpack'
 import { createAppRouteCode } from './create-app-route-code'
 import { MissingDefaultParallelRouteError } from '../../../../shared/lib/errors/missing-default-parallel-route-error'
+import { installBindings } from '../../../swc'
 
 export type AppLoaderOptions = {
   name: string
@@ -633,6 +634,11 @@ const filesInDirMapMap: WeakMap<
   Map<string, Promise<Set<string>>>
 > = new WeakMap()
 const nextAppLoader: AppLoader = async function nextAppLoader() {
+  // install native bindings early so they are always available.
+  // When run by webpack, next will have already done this, so this will be fast,
+  // but if run by turbopack in a subprocess it is required.  In that case we cannot pass the
+  // `useWasmBinary` flag, but that is ok since turbopack doesn't currently support wasm.
+  await installBindings()
   const loaderOptions = this.getOptions()
   const {
     name,
