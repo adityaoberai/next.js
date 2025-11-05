@@ -908,5 +908,7 @@
   "907": "The next-server runtime is not available in Edge runtime.",
   "908": "`abandonRender` called on a stage controller that cannot be abandoned.",
   "909": "Expected debug stream to be a ReadableStream",
-  "910": "Expected debug stream to be a Readable"
+  "910": "Expected debug stream to be a Readable",
+  "911": "Unexpected stream chunk in Before stage",
+  "912": "Unexpected stream chunk while in Before stage"
 }
