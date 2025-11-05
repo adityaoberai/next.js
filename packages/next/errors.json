@@ -910,5 +910,8 @@
   "909": "Expected debug stream to be a ReadableStream",
   "910": "Expected debug stream to be a Readable",
   "911": "Unexpected stream chunk in Before stage",
-  "912": "Unexpected stream chunk while in Before stage"
+  "912": "Unexpected stream chunk while in Before stage",
+  "913": "Failed to deserialize errors.",
+  "914": "Expected `sendErrorsToBrowser` to be defined in renderOpts.",
+  "915": "Failed to serialize errors."
 }

@@ -4,9 +4,10 @@ import type { WorkerRequestHandler } from './types'
 
 import { LRUCache } from './lru-cache'
 import { createRequestResponseMocks } from './mock-request'
-import { HMR_MESSAGE_SENT_TO_BROWSER } from '../dev/hot-reloader-types'
-import type { ReactDebugChannelForBrowser } from '../dev/debug-channel'
-import type { ServerCacheStatus } from '../../next-devtools/dev-overlay/cache-indicator'
+import {
+  HMR_MESSAGE_SENT_TO_BROWSER,
+  type NextJsHotReloaderInterface,
+} from '../dev/hot-reloader-types'
 
 /**
  * The DevBundlerService provides an interface to perform tasks with the
@@ -14,6 +15,10 @@ import type { ServerCacheStatus } from '../../next-devtools/dev-overlay/cache-in
  */
 export class DevBundlerService {
   public appIsrManifestInner: InstanceType<typeof LRUCache<boolean>>
+  public close: NextJsHotReloaderInterface['close']
+  public setCacheStatus: NextJsHotReloaderInterface['setCacheStatus']
+  public setReactDebugChannel: NextJsHotReloaderInterface['setReactDebugChannel']
+  public sendErrorsToBrowser: NextJsHotReloaderInterface['sendErrorsToBrowser']
 
   constructor(
     private readonly bundler: DevBundler,
@@ -26,6 +31,14 @@ export class DevBundlerService {
         return 16
       }
     )
+
+    const { hotReloader } = bundler
+
+    this.close = hotReloader.close.bind(hotReloader)
+    this.setCacheStatus = hotReloader.setCacheStatus.bind(hotReloader)
+    this.setReactDebugChannel =
+      hotReloader.setReactDebugChannel.bind(hotReloader)
+    this.sendErrorsToBrowser = hotReloader.sendErrorsToBrowser.bind(hotReloader)
   }
 
   public ensurePage: typeof this.bundler.hotReloader.ensurePage = async (
@@ -96,13 +109,6 @@ export class DevBundlerService {
     return serializableManifest
   }
 
-  public setCacheStatus(
-    status: ServerCacheStatus,
-    htmlRequestId: string
-  ): void {
-    this.bundler.hotReloader.setCacheStatus(status, htmlRequestId)
-  }
-
   public setIsrStatus(key: string, value: boolean | undefined) {
     if (value === undefined) {
       this.appIsrManifestInner.remove(key)
@@ -120,21 +126,5 @@ export class DevBundlerService {
       type: HMR_MESSAGE_SENT_TO_BROWSER.ISR_MANIFEST,
       data: this.appIsrManifest,
     })
-  }
-
-  public setReactDebugChannel(
-    debugChannel: ReactDebugChannelForBrowser,
-    htmlRequestId: string,
-    requestId: string
-  ): void {
-    this.bundler.hotReloader.setReactDebugChannel(
-      debugChannel,
-      htmlRequestId,
-      requestId
-    )
-  }
-
-  public close() {
-    this.bundler.hotReloader.close()
   }
 }
