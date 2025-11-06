@@ -375,7 +375,7 @@ pub async fn chunk_group_content(
                 .async_modules
                 .iter()
                 .copied()
-                .map(|m| AvailableModuleItem::AsyncLoader(m)),
+                .map(AvailableModuleItem::AsyncLoader),
         )
         .collect();
     let availability_info = availability_info
